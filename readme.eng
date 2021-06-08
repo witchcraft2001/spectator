@@ -1,0 +1,20 @@
+Spectrator v0.1 (beta)
+(c) DeadMaN/Alpha Studio, 2003
+
+This utility allows copying of SCL contents to TRD file. 
+
+Usage:
+
+Run the program. Open SCL file at the any panel and open TRD file at the another panel.
+Now you can copy any Spectrum file under cursor from SCL to TRD. 
+Note: TRD file should be created already.
+
+Hot keys:
+
+TAB - change panel
+Symbol+SHIFT - change disk
+F5 - copy
+ESC - exit
+
+
+---
