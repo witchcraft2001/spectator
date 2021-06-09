@@ -3,6 +3,9 @@
 ;Эта утилита предназначена для копирования содержимого SCL файлов в TRD файлы.
 
                 device zxspectrum128
+                include "dss_equ.asm"
+                include "bios_equ.asm"
+                
                 org     4100h - 200h
 
 EXEhead:	db	"EXE"
@@ -18,19 +21,19 @@ EXEhead:	db	"EXE"
                 ds      490,0
 EntryExec:                
                 ld      (loc_4C9A+1), sp
-                ld      bc, 13Dh
+                ld      bc, 100h + Dss.GetMem
                 rst     10h
-                jp      c, loc_4C61
-                ld      bc, 3Ah ; ':'
+                jp      c, DosError
+                ld      bc, Dss.SetWin2
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      sp, 0BFFFh
                 call    sub_4A12
 
-loc_4118:                               ; CODE XREF: RAM:4157↓j
+.loop:                               ; CODE XREF: RAM:4157↓j
                 call    sub_4643
                 call    sub_4B0B
-                call    loc_4B03
+                call    ClearWindow
                 call    sub_4264
                 call    sub_4428
                 call    sub_44C0
@@ -40,7 +43,7 @@ loc_4118:                               ; CODE XREF: RAM:4157↓j
                 call    loc_4885
                 call    sub_46DF
                 call    sub_4B0B
-                call    loc_4B03
+                call    ClearWindow
                 call    sub_4264
                 call    sub_4428
                 call    sub_44C0
@@ -49,7 +52,7 @@ loc_4118:                               ; CODE XREF: RAM:4157↓j
                 call    sub_459E
                 call    loc_4885
                 call    loc_476B
-                jp      loc_4118
+                jp      .loop
 ; ---------------------------------------------------------------------------
 
 loc_415A:                               ; CODE XREF: RAM:482B↓p
@@ -69,7 +72,7 @@ locret_416C:                            ; CODE XREF: RAM:4164↑j
 
 loc_416D:                               ; CODE XREF: RAM:4169↑j
                 call    sub_4198
-                ld      a, (loc_4B03+1)
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_417F
                 call    sub_4643
@@ -124,9 +127,9 @@ sub_4198:                               ; CODE XREF: RAM:loc_416D↑p
                 call    sub_4355
                 ld      de, (word_523C)
                 ld      a, (de)
-                ld      bc, 15h
+                ld      bc, Dss.Move_FP
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      de, (word_5206)
                 call    loc_4505
                 call    sub_4B91
@@ -193,32 +196,32 @@ sub_4198:                               ; CODE XREF: RAM:loc_416D↑p
                 ld      a, (hl)
                 ld      hl, 0
                 ld      ix, 0
-                ld      bc, 15h
+                ld      bc, Dss.Move_FP
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_523C)
                 ld      a, (hl)
                 ld      hl, (word_5240)
                 ld      de, 900h
-                ld      c, 14h
+                ld      c, Dss.Write
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 sub_4264:                               ; CODE XREF: RAM:4121↑p
                                         ; RAM:413F↑p
-                ld      c, 2
+                ld      c, Dss.CurDisk
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_5224)
                 ld      (hl), a
                 ret
 ; ---------------------------------------------------------------------------
-                ret
+sub_426F:       ret
 ; ---------------------------------------------------------------------------
-                ret
+sub_4270:       ret
 ; ---------------------------------------------------------------------------
-                ld      hl, (word_5228)
+sub_4271:       ld      hl, (word_5228)
                 ld      a, (hl)
                 call    loc_44B4
                 ld      d, h
@@ -230,7 +233,7 @@ sub_4264:                               ; CODE XREF: RAM:4121↑p
                 call    sub_4432
                 call    sub_43E2
                 call    sub_4B0B
-                call    loc_4B03
+                call    ClearWindow
                 call    sub_44C0
                 call    sub_459E
                 call    loc_4885
@@ -260,29 +263,29 @@ loc_4298:                               ; CODE XREF: RAM:4280↑j
 ; ---------------------------------------------------------------------------
 
 loc_42BD:                               ; CODE XREF: RAM:42BA↑j
-                ld      bc, 44h ; 'D'
+                ld      bc, Dss.DosName
                 ld      de, 9BE4h
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, 9BE4h
                 call    sub_43A0
                 call    sub_460C
                 call    sub_49E8
-                call    loc_4B03
+                call    ClearWindow
                 call    sub_4B0B
                 call    loc_4885
                 ret
 ; ---------------------------------------------------------------------------
 
 loc_42DD:                               ; CODE XREF: RAM:42A9↑j
-                ld      bc, 44h ; 'D'
+                ld      bc, Dss.DosName
                 ld      de, 9BE4h
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, 9BE4h
                 call    sub_435D
                 call    sub_45D5
-                call    loc_4B03
+                call    ClearWindow
                 call    sub_4B0B
                 call    loc_4885
                 ret
@@ -298,7 +301,7 @@ sub_4300:                               ; CODE XREF: sub_4198+1E↑p
                 push    ix
                 ld      a, (de)
                 call    sub_4976
-                ld      (byte_5205), a
+                ld      (memId), a
                 ld      (word_5206), hl
                 ex      de, hl
                 ld      hl, (word_5226)
@@ -306,9 +309,9 @@ sub_4300:                               ; CODE XREF: sub_4198+1E↑p
                 pop     ix
                 pop     hl
                 push    de
-                ld      bc, 15h
+                ld      bc, Dss.Move_FP
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 pop     de
                 call    loc_4540
                 ret
@@ -360,9 +363,9 @@ sub_4355:                               ; CODE XREF: sub_4198+31↑p
 ; ===================================================================
 sub_435D:                               ; CODE XREF: RAM:42EA↑p
                 xor     a
-                ld      c, 11h
+                ld      c, Dss.Open
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_5226)
                 ld      (hl), a
                 ld      hl, (word_5230)
@@ -372,9 +375,9 @@ sub_435D:                               ; CODE XREF: RAM:42EA↑p
                 ld      a, (hl)
                 ld      hl, (word_5220)
                 ld      de, 9
-                ld      c, 13h
+                ld      c, Dss.Read
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_5220)
                 ld      a, 8
                 call    sub_4994
@@ -388,16 +391,16 @@ sub_435D:                               ; CODE XREF: RAM:42EA↑p
                 ld      hl, (word_5220)
                 ld      bc, (word_5226)
                 ld      a, (bc)
-                ld      c, 13h
+                ld      c, Dss.Read
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 sub_43A0:                               ; CODE XREF: RAM:42CA↑p
                 xor     a
-                ld      c, 11h
+                ld      c, Dss.Open
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_5226)
                 ld      (hl), a
                 ld      hl, (word_5230)
@@ -407,9 +410,9 @@ sub_43A0:                               ; CODE XREF: RAM:42CA↑p
                 ld      a, (hl)
                 ld      hl, (word_5222)
                 ld      de, 900h
-                ld      c, 13h
+                ld      c, Dss.Read
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 sub_43C1:                               ; CODE XREF: RAM:42A4↑p
@@ -449,10 +452,10 @@ loc_43FE:                               ; CODE XREF: sub_43E2+18↑j
                 push    de
                 push    hl
                 ld      hl, 43C9h
-                call    loc_4A70
+                call    PrintString
                 pop     hl
                 pop     de
-                call    loc_4A70
+                call    PrintString
                 ret
 ; ===================================================================
 sub_440F:                               ; CODE XREF: RAM:412A↑p
@@ -466,18 +469,18 @@ loc_4415:                               ; DATA XREF: sub_4643+7B↓w
                 ld      hl, (word_5224)
                 ld      a, 41h ; 'A'
                 add     a, (hl)
-                call    loc_4950
+                call    WrChar
                 inc     e
                 ld      a, 3Ah ; ':'
-                call    loc_4950
+                call    WrChar
                 ret
 ; ===================================================================
 sub_4428:                               ; CODE XREF: RAM:4124↑p
                                         ; RAM:4142↑p
                 ld      hl, (word_521E)
-                ld      c, 1Eh
+                ld      c, Dss.CurDir
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 sub_4432:                               ; CODE XREF: RAM:4282↑p
@@ -582,13 +585,13 @@ sub_448B:                               ; CODE XREF: sub_4432+12↑j
                 nop
                 ld      hl, (word_5224)
                 ld      a, (hl)
-                ld      c, 1
+                ld      c, Dss.ChDisk
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      hl, (word_521E)
-                ld      c, 1Dh
+                ld      c, Dss.ChDir
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ---------------------------------------------------------------------------
 loc_44B4:                               ; CODE XREF: sub_4198+4↑p
@@ -614,14 +617,14 @@ sub_44C0:                               ; CODE XREF: RAM:4127↑p
                 ld      hl, 5218h
                 ld      de, 9BE4h
                 ld      a, 0FFh
-                ld      bc, 19h
+                ld      bc, Dss.F_First
                 rst     10h
                 jp      c, locret_44E8
 
 loc_44DD:                               ; CODE XREF: sub_44C0+26↓j
                 call    sub_44EB
                 ld      de, 9BE4h
-                ld      c, 1Ah
+                ld      c, Dss.F_Next
                 rst     10h
                 jr      nc, loc_44DD
 
@@ -686,9 +689,9 @@ sub_4529:                               ; CODE XREF: RAM:4516↑p
                 ld      a, (de)
                 ld      d, c
                 ld      e, 0
-                ld      c, 14h
+                ld      c, Dss.Write
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 pop     af
                 pop     hl
                 pop     de
@@ -757,10 +760,10 @@ sub_4588:                               ; CODE XREF: RAM:4513↑p
                 push    hl
                 push    bc
                 push    de
-                ld      a, (byte_5205)
-                ld      c, 3Bh ; ';'
+                ld      a, (memId)
+                ld      c, Dss.SetWin3
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 pop     de
                 pop     bc
                 pop     hl
@@ -770,9 +773,9 @@ sub_4588:                               ; CODE XREF: RAM:4513↑p
 ; ===================================================================
 sub_459E:                               ; CODE XREF: RAM:4130↑p
                                         ; RAM:414E↑p ...
-                ld      hl, 459Eh
-                ld      de, 4271h
-                ld      a, (loc_4B03+1)
+                ld      hl, sub_459E
+                ld      de, sub_4271
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_45B4
                 ld      (loc_481F+1), hl
@@ -787,7 +790,7 @@ loc_45B4:                               ; CODE XREF: sub_459E+B↑j
 loc_45BB:                               ; CODE XREF: sub_459E+14↑j
                 ld      a, 0Ch
                 ld      (loc_48DE+1), a
-                ld      hl, 490Ch
+                ld      hl, sub_490C
                 ld      (loc_4897+1), hl
                 ld      (loc_44B7+1), hl
                 ld      a, (byte_5213)
@@ -798,9 +801,9 @@ loc_45BB:                               ; CODE XREF: sub_459E+14↑j
 ; ===================================================================
 sub_45D5:                               ; CODE XREF: RAM:4194↑p
                                         ; RAM:42ED↑p
-                ld      hl, 45D5h
-                ld      de, 426Fh
-                ld      a, (loc_4B03+1)
+                ld      hl, sub_45D5
+                ld      de, sub_426F
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_45EB
                 ld      (loc_481F+1), hl
@@ -815,7 +818,7 @@ loc_45EB:                               ; CODE XREF: sub_45D5+B↑j
 loc_45F2:                               ; CODE XREF: sub_45D5+14↑j
                 ld      a, 0Eh
                 ld      (loc_48DE+1), a
-                ld      hl, 48FDh
+                ld      hl, sub_48FD
                 ld      (loc_4897+1), hl
                 ld      (loc_44B7+1), hl
                 ld      a, (byte_5211)
@@ -826,9 +829,9 @@ loc_45F2:                               ; CODE XREF: sub_45D5+14↑j
 ; ===================================================================
 sub_460C:                               ; CODE XREF: RAM:4188↑p
                                         ; RAM:42CD↑p
-                ld      hl, 460Ch
-                ld      de, 4270h
-                ld      a, (loc_4B03+1)
+                ld      hl, sub_460C
+                ld      de, sub_4270
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_4622
                 ld      (loc_481F+1), hl
@@ -843,7 +846,7 @@ loc_4622:                               ; CODE XREF: sub_460C+B↑j
 loc_4629:                               ; CODE XREF: sub_460C+14↑j
                 ld      a, 10h
                 ld      (loc_48DE+1), a
-                ld      hl, 4907h
+                ld      hl, sub_4907
                 ld      (loc_4897+1), hl
                 ld      (loc_44B7+1), hl
                 ld      a, (byte_5212)
@@ -852,23 +855,23 @@ loc_4629:                               ; CODE XREF: sub_460C+14↑j
                 ld      (hl), 1
                 ret
 ; ===================================================================
-sub_4643:                               ; CODE XREF: RAM:loc_4118↑p
+sub_4643:                               ; CODE XREF: RAM:.loop↑p
                                         ; RAM:4177↑p ...
                 ld      hl, 8000h
                 ld      (word_5220), hl
-                ld      hl, 520Eh
+                ld      hl, byte_520E
                 ld      (word_522C), hl
-                ld      hl, 520Dh
+                ld      hl, byte_520D
                 ld      (word_522A), hl
-                ld      hl, 520Ch
+                ld      hl, byte_520C
                 ld      (word_5228), hl
-                ld      hl, 520Fh
+                ld      hl, byte_520F
                 ld      (word_5226), hl
-                ld      hl, 5002h
+                ld      hl, byte_5000+2
                 ld      (word_521E), hl
                 ld      hl, 9C10h
                 ld      (word_5222), hl
-                ld      hl, 5232h
+                ld      hl, byte_5232
                 ld      (word_522E), hl
                 ld      hl, (word_521C)
                 ld      (word_5224), hl
@@ -876,19 +879,19 @@ sub_4643:                               ; CODE XREF: RAM:loc_4118↑p
                 ld      (word_5230), hl
                 ld      hl, 8DF2h
                 ld      (word_5234), hl
-                ld      hl, 520Bh
+                ld      hl, byte_520B
                 ld      (word_5236), hl
-                ld      hl, 520Ah
+                ld      hl, byte_520A
                 ld      (word_5238), hl
-                ld      hl, 5209h
+                ld      hl, byte_5209
                 ld      (word_523A), hl
-                ld      hl, 5210h
+                ld      hl, byte_5210
                 ld      (word_523C), hl
-                ld      hl, 5102h
+                ld      hl, byte_5102
                 ld      (word_523E), hl
                 ld      hl, 0A510h
                 ld      (word_5234), hl
-                ld      hl, 5233h
+                ld      hl, byte_5233
                 ld      (word_5244), hl
                 ld      hl, (word_521C+1)
                 ld      (word_5242), hl
@@ -902,7 +905,7 @@ sub_4643:                               ; CODE XREF: RAM:loc_4118↑p
                 ld      a, 1
 
 loc_46CC:                               ; CODE XREF: sub_46DF+89↓j
-                ld      (loc_4B03+1), a
+                ld      (ClearWindow+1), a
                 ld      a, b
                 ld      (loc_4866+1), a
                 ld      a, c
@@ -915,39 +918,39 @@ sub_46DF:                               ; CODE XREF: RAM:4136↑p
                                         ; RAM:loc_417F↑p ...
                 ld      hl, 8DF2h
                 ld      (word_5220), hl
-                ld      hl, 520Bh
+                ld      hl, byte_520B
                 ld      (word_522C), hl
-                ld      hl, 520Ah
+                ld      hl, byte_520A
                 ld      (word_522A), hl
-                ld      hl, 5209h
+                ld      hl, byte_5209
                 ld      (word_5228), hl
-                ld      hl, 5210h
+                ld      hl, byte_5210
                 ld      (word_5226), hl
-                ld      hl, 5102h
+                ld      hl, byte_5102
                 ld      (word_521E), hl
                 ld      hl, 0A510h
                 ld      (word_5220), hl
-                ld      hl, 5233h
+                ld      hl, byte_5233
                 ld      (word_522E), hl
                 ld      hl, (word_521C+1)
                 ld      (word_5224), hl
-                ld      hl, 4BABh
+                ld      hl, nullsub_2
                 ld      (word_5230), hl
                 ld      hl, 8000h
                 ld      (word_5234), hl
-                ld      hl, 520Eh
+                ld      hl, byte_520E
                 ld      (word_5236), hl
-                ld      hl, 520Dh
+                ld      hl, byte_520D
                 ld      (word_5238), hl
-                ld      hl, 520Ch
+                ld      hl, byte_520C
                 ld      (word_523A), hl
-                ld      hl, 520Fh
+                ld      hl, byte_520F
                 ld      (word_523C), hl
-                ld      hl, 5002h
+                ld      hl, byte_5000+2
                 ld      (word_523E), hl
                 ld      hl, 9C10h
                 ld      (word_5240), hl
-                ld      hl, 5232h
+                ld      hl, byte_5232
                 ld      (word_5244), hl
                 ld      hl, (word_521C)
                 ld      (word_5242), hl
@@ -968,14 +971,14 @@ loc_476B:                               ; CODE XREF: RAM:4154↑p
 
 loc_476E:                               ; CODE XREF: RAM:478F↓j
                                         ; RAM:47A7↓j ...
-                ld      bc, 3035h
+                ld      bc, 3035h       ;Dss.K_CLEAR
                 rst     10h
                 ld      hl, 11Bh
                 and     a
                 sbc     hl, de
                 jp      z, loc_499B
                 cp      9
-                jp      z, loc_4806
+                jp      z, TabPressed
                 cp      41h ; 'A'
                 jr      c, loc_4789
                 cp      5Bh ; '['
@@ -1043,7 +1046,7 @@ loc_47CE:                               ; CODE XREF: RAM:47A0↑j
 
 loc_47F0:                               ; CODE XREF: RAM:4794↑j
                 call    sub_4A52
-                ld      a, (loc_4B03+1)
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      nz, loc_4800
 
@@ -1059,9 +1062,9 @@ loc_4800:                               ; CODE XREF: RAM:47F8↑j
                 jp      loc_476B
 ; ---------------------------------------------------------------------------
 
-loc_4806:                               ; CODE XREF: RAM:477D↑j
+TabPressed:                               ; CODE XREF: RAM:477D↑j
                 call    sub_4A52
-                ld      a, (loc_4B03+1)
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_481C
                 call    sub_4643
@@ -1095,7 +1098,7 @@ loc_4831:                               ; CODE XREF: RAM:4786↑j
                 ld      (hl), a
                 call    sub_4858
                 call    sub_4B0B
-                call    loc_4B03
+                call    ClearWindow
                 ld      hl, (word_521E)
                 inc     hl
                 ld      (hl), 0
@@ -1133,7 +1136,7 @@ loc_486C:                               ; DATA XREF: sub_4643+91↑w
 loc_4870:                               ; CODE XREF: RAM:486A↑j
                 ld      d, a
                 ld      e, b
-                ld      c, 57h ; 'W'
+                ld      c, Dss.RdChar
                 rst     10h
                 ld      a, b
                 ld      (byte_5204), a
@@ -1176,7 +1179,7 @@ loc_48A4:                               ; CODE XREF: RAM:48E7↓j
 loc_48A7:                               ; CODE XREF: RAM:48AD↓j
                 ld      a, (hl)
                 inc     hl
-                call    loc_4950
+                call    WrChar
                 inc     e
                 djnz    loc_48A7
                 inc     e
@@ -1189,7 +1192,7 @@ loc_48B2:                               ; CODE XREF: RAM:48C0↓j
                 jr      c, loc_48BF
                 cp      80h
                 jr      nc, loc_48BF
-                call    loc_4950
+                call    WrChar
 
 loc_48BF:                               ; CODE XREF: RAM:48B6↑j
                                         ; RAM:48BA↑j
@@ -1319,9 +1322,9 @@ sub_4939:                               ; CODE XREF: RAM:4551↑p
                 ld      a, (de)
                 ld      d, c
                 ld      e, 0
-                ld      c, 13h
+                ld      c, Dss.Read
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 pop     af
                 pop     hl
                 pop     de
@@ -1329,14 +1332,14 @@ sub_4939:                               ; CODE XREF: RAM:4551↑p
                 ret
 ; ---------------------------------------------------------------------------
 
-loc_4950:                               ; CODE XREF: sub_440F+F↑p
+WrChar:                               ; CODE XREF: sub_440F+F↑p
                                         ; sub_440F+15↑p ...
                 push    hl
                 push    bc
 
 loc_4952:                               ; DATA XREF: sub_440F+3↑w
                                         ; RAM:489E↑w
-                ld      bc, 58h ; 'X'
+                ld      bc, Dss.WrChar
                 rst     10h
                 pop     bc
                 pop     hl
@@ -1346,13 +1349,13 @@ loc_4952:                               ; DATA XREF: sub_440F+3↑w
                 ld      hl, 210h
                 ld      de, 50h ; 'P'
                 ld      ix, 100h
-                ld      bc, 59h ; 'Y'
+                ld      bc, Bios.Drv_Set_Par
                 rst     8
                 jp      c, loc_4C56
 
 loc_496D:                               ; DATA XREF: RAM:4959↑w
                 ld      a, 0
-                ld      c, 51h ; 'Q'
+                ld      c, Bios.Drv_Reset
                 rst     8
                 jp      c, loc_4C56
                 ret
@@ -1375,10 +1378,10 @@ sub_4976:                               ; CODE XREF: sub_4300+7↑p
 
 loc_4984:                               ; CODE XREF: sub_4976+B↑j
                 push    hl
-                ld      c, 3Dh ; '='
+                ld      c, Dss.GetMem
                 rst     10h
                 pop     hl
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 sub_498D:                               ; CODE XREF: sub_49D9+7↓p
@@ -1404,28 +1407,28 @@ loc_499B:                               ; CODE XREF: RAM:4778↑j
                                         ; RAM:4C9D↓j
                 call    nullsub_1
                 call    nullsub_2
-                ld      bc, 41h ; 'A'
+                ld      bc, Dss.Exit
                 rst     10h
                 ret
 ; ---------------------------------------------------------------------------
                 call    sub_4AD6
                 ld      de, 1248h
                 ld      hl, 4FF8h
-                call    loc_4A70
+                call    PrintString
                 ld      de, 1348h
                 ld      hl, 4FF8h
-                call    loc_4A70
+                call    PrintString
                 call    sub_4AA3
                 ld      de, 1448h
                 ld      hl, 4FFCh
-                call    loc_4A70
+                call    PrintString
                 ld      de, 0Eh
                 ld      h, b
                 ld      l, c
                 call    sub_4AA3
                 ld      de, 848h
                 ld      hl, 4FFCh
-                call    loc_4A70
+                call    PrintString
                 ret
 
 ; ===================================================================
@@ -1477,7 +1480,7 @@ loc_4A0B:                               ; CODE XREF: sub_49E8+D↑j
 ; ===================================================================
 sub_4A12:                               ; CODE XREF: RAM:4115↑p
                 ld      a, (byte_5215)
-                call    sub_4AF6
+                call    ClearScreen
                 ld      de, 0
                 ld      bc, 1C03h
                 ld      hl, 4FA5h
@@ -1496,7 +1499,7 @@ sub_4A12:                               ; CODE XREF: RAM:4115↑p
                 ld      hl, 4FADh
                 call    loc_4BD3
                 ld      hl, 4FB5h
-                call    loc_4A70
+                call    PrintString
                 ret
 ; ===================================================================
 sub_4A52:                               ; CODE XREF: RAM:47B4↑p
@@ -1518,11 +1521,11 @@ loc_4A60:                               ; CODE XREF: RAM:4881↑p
 
 loc_4A63:                               ; CODE XREF: RAM:4A6D↓j
                 push    bc
-                ld      c, 57h ; 'W'
+                ld      c, Dss.RdChar
                 rst     10h
 
 loc_4A67:                               ; DATA XREF: RAM:loc_4A60↑w
-                ld      bc, 58h ; 'X'
+                ld      bc, Dss.WrChar
                 rst     10h
                 inc     e
                 pop     bc
@@ -1530,7 +1533,7 @@ loc_4A67:                               ; DATA XREF: RAM:loc_4A60↑w
                 ret
 ; ---------------------------------------------------------------------------
 
-loc_4A70:                               ; CODE XREF: sub_43E2+24↑p
+PrintString:                               ; CODE XREF: sub_43E2+24↑p
                                         ; sub_43E2+29↑p ...
                 ld      a, (hl)
                 inc     hl
@@ -1542,7 +1545,7 @@ loc_4A70:                               ; CODE XREF: sub_43E2+24↑p
                 jp      z, loc_4A87
                 cp      5
                 jp      z, loc_4A8E
-                jp      loc_4A70
+                jp      PrintString
 ; ---------------------------------------------------------------------------
 
 loc_4A87:                               ; CODE XREF: RAM:4A7C↑j
@@ -1550,14 +1553,14 @@ loc_4A87:                               ; CODE XREF: RAM:4A7C↑j
                 inc     hl
                 ld      e, (hl)
                 inc     hl
-                jp      loc_4A70
+                jp      PrintString
 ; ---------------------------------------------------------------------------
 
 loc_4A8E:                               ; CODE XREF: RAM:4A81↑j
                 ld      a, (hl)
                 inc     hl
                 ld      (loc_4A96+1), a
-                jp      loc_4A70
+                jp      PrintString
 ; ---------------------------------------------------------------------------
 
 loc_4A96:                               ; CODE XREF: RAM:4A77↑j
@@ -1565,12 +1568,12 @@ loc_4A96:                               ; CODE XREF: RAM:4A77↑j
                 ld      b, 0
                 push    hl
                 push    de
-                ld      c, 58h ; 'X'
+                ld      c, Dss.WrChar
                 rst     10h
                 pop     de
                 pop     hl
                 inc     e
-                jp      loc_4A70
+                jp      PrintString
 
 ; ===================================================================
 
@@ -1645,39 +1648,39 @@ loc_4AE4:                               ; CODE XREF: sub_4AD6+10↓j
 ; ===================================================================
 
 
-sub_4AF6:                               ; CODE XREF: sub_4A12+3↑p
+ClearScreen:                               ; CODE XREF: sub_4A12+3↑p
                 ld      de, 0
                 ld      hl, 2050h
 
-loc_4AFC:                               ; CODE XREF: RAM:4B09↓j
-                ld      bc, 656h
+.cls:                               ; CODE XREF: RAM:4B09↓j
+                ld      bc, 600h + Dss.Clear
                 ld      a, 20h ; ' '
                 rst     10h
                 ret
 ; ---------------------------------------------------------------------------
 
-loc_4B03:                               ; CODE XREF: RAM:411E↑p
+ClearWindow:                               ; CODE XREF: RAM:411E↑p
                                         ; RAM:413C↑p ...
                 ld      de, 301h
                 ld      hl, 1B1Ah
-                jr      loc_4AFC
+                jr      ClearScreen.cls
 
 ; ===================================================================
 
 
 sub_4B0B:                               ; CODE XREF: RAM:411B↑p
                                         ; RAM:4139↑p ...
-                ld      a, (loc_4B03+1)
+                ld      a, (ClearWindow+1)
                 cp      1
                 jr      z, loc_4B1A
                 ld      bc, 1
-                ld      hl, 5209h
+                ld      hl, byte_5209
                 jr      loc_4B22
 ; ---------------------------------------------------------------------------
 
 loc_4B1A:                               ; CODE XREF: sub_4B0B+5↑j
                 ld      bc, 1
-                ld      hl, 520Ch
+                ld      hl, byte_520C
                 jr      loc_4B22
 ; ---------------------------------------------------------------------------
 
@@ -1713,26 +1716,27 @@ sub_4B2A:                               ; CODE XREF: sub_4198+F↑p
 ; ---------------------------------------------------------------------------
 
 loc_4B41:                               ; CODE XREF: sub_4B2A+13↑j
-                ld      hl, 4B4Eh
+                ld      hl, MsgTrdIsFull
                 jr      loc_4B49
 ; ---------------------------------------------------------------------------
 
 loc_4B46:                               ; CODE XREF: sub_4B2A+6↑j
-                ld      hl, 4B68h
+                ld      hl, Msg2
 
 loc_4B49:                               ; CODE XREF: sub_4B2A+1A↑j
-                call    loc_4A70
+                call    PrintString
                 scf
                 ret
 ; ---------------------------------------------------------------------------
-                db 16h, 1Fh, 15h, 8Dh, 0A5h, 0E2h, 20h, 0ACh, 0A5h, 0E1h
+MsgTrdIsFull:   
+                db 16h, 1Fh, 15h, 8Dh, 0A5h, 0E2h, 20h, 0ACh, 0A5h, 0E1h        ;Нет места на TRD диске
                 db 0E2h, 0A0h, 20h, 0ADh, 0A0h
 aTrd:           db ' TRD '
                 db 0A4h, 0A8h, 0E1h, 0AAh, 0A5h, 0
-                db  16h
+Msg2:           db  16h
                 db  1Fh
                 db    0
-                db  8Dh
+Msg3:           db  8Dh                                                         ;На TRD диске уже находится 128 файлов
                 db 0A0h
 aTrd_0:         db ' TRD '
                 db 0A4h, 0A8h, 0E1h, 0AAh, 0A5h, 20h, 0E3h, 0A6h, 0A5h
@@ -1746,14 +1750,14 @@ a128:           db ' 128 '
 
 sub_4B91:                               ; CODE XREF: sub_4198+47↑p
 
-                ld      a, (byte_5205)
-                ld      c, 3Eh ; '>'
+                ld      a, (memId)
+                ld      c, Dss.FreeMem
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ret
 ; ===================================================================
 
-
+;499B
 nullsub_1:                              ; CODE XREF: RAM:loc_499B↑p
                                         ; DATA XREF: RAM:4BA7↓w
                 ret
@@ -1761,13 +1765,13 @@ nullsub_1:                              ; CODE XREF: RAM:loc_499B↑p
                 ld      a, (byte_520F)
                 ld      c, 12h
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      a, 0C9h
                 ld      (nullsub_1), a
                 ret
 ; ===================================================================
 
-
+;4BABh
 nullsub_2:                              ; CODE XREF: RAM:499E↑p
                                         ; DATA XREF: RAM:4BB7↓w
                 ret
@@ -1775,7 +1779,7 @@ nullsub_2:                              ; CODE XREF: RAM:499E↑p
                 ld      a, (byte_5210)
                 ld      c, 12h
                 rst     10h
-                jp      c, loc_4C61
+                jp      c, DosError
                 ld      a, 0C9h
                 ld      (nullsub_2), a
                 ret
@@ -1931,7 +1935,7 @@ loc_4C56:                               ; CODE XREF: sub_4928+A↑j
                 jp      loc_4C79
 ; ---------------------------------------------------------------------------
 
-loc_4C61:                               ; CODE XREF: RAM:4108↑j
+DosError:                               ; CODE XREF: RAM:4108↑j
                                         ; RAM:410F↑j ...
                 ld      (byte_4CA0), a
                 cp      20h ; ' '
@@ -1979,7 +1983,7 @@ loc_4C9A:                               ; DATA XREF: RAM:4100↑w
                 jp      loc_499B
 ; ---------------------------------------------------------------------------
 byte_4CA0:      db 0                    ; DATA XREF: sub_4928+330↑w
-                                        ; sub_4198:loc_4C61↑w ...
+                                        ; sub_4198:DosError↑w ...
                 db 8Eh, 0E8h, 0A8h, 0A1h, 0AAh, 0A0h                    ;Ошибка BIOS
 aBios:          db ' BIOS',0
                 db 0A2h, 0E1h, 0A5h, 20h, 0ADh, 0AEh, 0E0h, 0ACh, 0A0h  ;все нормально
@@ -2131,20 +2135,22 @@ aProgrammByDead:db 'Programm  by  DeadMaN'
                 db  3Bh ; ;
 aAlphastudio200:db 'AlphaStudio, 2003',0
                 ds 9, 0
-byte_5000:      ds 202h, 0          ; DATA XREF: sub_4AA3+1F↑w
+byte_5000:      ds 100h, 0          ; DATA XREF: sub_4AA3+1F↑w
+byte_5100:      ds 2h, 0          ; DATA XREF: sub_4AA3+1F↑w
+byte_5102:      ds 100h, 0          ; DATA XREF: sub_4AA3+1F↑w
 word_5202:      dw 0                    ; DATA XREF: RAM:4879↑w
 byte_5204:      db 0                    ; DATA XREF: RAM:4876↑w
-byte_5205:      db 0                    ; DATA XREF: sub_4300+A↑w
+memId:      db 0                    ; DATA XREF: sub_4300+A↑w
                                         ; sub_4588+6↑r ...
 word_5206:      dw 0                    ; DATA XREF: sub_4198+40↑r
                                         ; sub_4300+D↑w
 byte_5208:      db 0                    ; DATA XREF: sub_4928+3↑r
-                db    0
-                db    0
-                db    0
-                db    0
-                db    0
-                db    0
+byte_5209:       db    0
+byte_520A:       db    0
+byte_520B:       db    0
+byte_520C:       db    0
+byte_520D:       db    0
+byte_520E:       db    0
 byte_520F:      db 0                    ; DATA XREF: RAM:4B9C↑r
 byte_5210:      db 0                    ; DATA XREF: RAM:4BAC↑r
 byte_5211:      db 5                    ; DATA XREF: sub_45D5+2B↑r
@@ -2177,8 +2183,8 @@ word_522E:      dw 0                    ; DATA XREF: RAM:loc_415A↑r
                                         ; sub_459E+31↑r ...
 word_5230:      dw 0                    ; DATA XREF: sub_435D+B↑r
                                         ; sub_43A0+B↑r ...
-                db    0
-                db    0
+byte_5232:      db    0
+byte_5233:      db    0
 word_5234:      dw 0                    ; DATA XREF: sub_4643+3F↑w
                                         ; sub_4643+63↑w ...
 word_5236:      dw 0                    ; DATA XREF: sub_4643+45↑w
